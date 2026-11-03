@@ -33,6 +33,9 @@ export class CameraController extends Component {
     @property
     public invertY: boolean = false;
 
+    // Hướng nhìn cơ sở của người chơi (Yaw góc quay quanh trục Y)
+    public baseYaw: number = 0;
+
     // Góc lệch khi người chơi đè phím Alt (Free Look)
     private _freeLookYaw: number = 0;
     private _freeLookPitch: number = 0;
@@ -61,8 +64,11 @@ export class CameraController extends Component {
             const playerNode = find('Player') || this.node.scene?.getChildByName('Player');
             if (playerNode) {
                 this.target = playerNode;
+                this.baseYaw = playerNode.eulerAngles.y;
                 console.log('✅ [CameraController] Đã tự động gán Target là Node Player!');
             }
+        } else {
+            this.baseYaw = this.target.eulerAngles.y;
         }
     }
 
@@ -127,13 +133,8 @@ export class CameraController extends Component {
             this._freeLookPitch += pitchDelta;
             this._freeLookPitch = math.clamp(this._freeLookPitch, -30.0, 50.0);
         } else {
-            // KHÔNG GIỮ ALT (Góc nhìn thực tế PUBG): Di chuột làm xoay mặt nhân vật!
-            // Camera gắn sau lưng nên tự động nhìn theo hướng mắt nhân vật giống thực tế!
-            if (this.target) {
-                const currentEuler = this.target.eulerAngles;
-                const newYaw = currentEuler.y - dx * this.sensitivity;
-                this.target.setRotationFromEuler(0, newYaw, 0);
-            }
+            // KHÔNG GIỮ ALT (Góc nhìn thực tế PUBG): Di chuột điều chỉnh hướng nhìn cơ sở
+            this.baseYaw -= dx * this.sensitivity;
 
             // Điều chỉnh góc ngước lên / nhìn xuống (Pitch)
             const pitchDelta = this.invertY ? (-dy * this.sensitivity) : (dy * this.sensitivity);
@@ -150,7 +151,7 @@ export class CameraController extends Component {
     protected lateUpdate(dt: number) {
         if (!this.target) return;
 
-        // Khi KHÔNG giữ Alt: trả góc Free Look mượt mà về 0 (góc nhìn sau lưng chuẩn PUBG)
+        // Khi KHÔNG giữ Alt: trả góc Free Look mượt mà về 0 (góc nhìn sau gáy chuẩn PUBG)
         if (!this._isAltDown) {
             this._freeLookYaw = math.lerp(this._freeLookYaw, 0, dt * this.returnSpeed);
             this._freeLookPitch = math.lerp(this._freeLookPitch, 0, dt * this.returnSpeed);
@@ -161,12 +162,13 @@ export class CameraController extends Component {
         const focusPoint = this.target.worldPosition.clone().add(this.targetOffset);
 
         // Vector hướng sau lưng nhân vật (Model Chibi này mặt hướng +Z nên sau lưng là -Z)
+        // Camera LUÔN CỐ ĐỊNH Ở ĐẰNG SAU GÁY PLAYER:
         const backDir = new Vec3(0, 0, -1);
         Vec3.transformQuat(backDir, backDir, this.target.worldRotation);
         backDir.y = 0;
         backDir.normalize();
 
-        // Xoay quanh người khi đè phím Alt (hoặc lúc đang lượn trả về)
+        // Xoay quanh người khi đè phím Alt (Free Look)
         if (this._freeLookYaw !== 0) {
             const rotY = new Quat();
             Quat.fromAxisAngle(rotY, Vec3.UP, math.toRadian(this._freeLookYaw));

@@ -1,5 +1,13 @@
-import { _decorator, Component, Node, Vec3, input, Input, EventKeyboard, KeyCode, SkeletalAnimation, AnimationClip, find } from 'cc';
+import { _decorator, Component, Node, Vec3, input, Input, EventKeyboard, KeyCode, SkeletalAnimation, AnimationClip, find, math } from 'cc';
+import { CameraController } from './CameraController';
 const { ccclass, property } = _decorator;
+
+function lerpAngleDeg(current: number, target: number, t: number): number {
+    let diff = (target - current) % 360;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    return current + diff * math.clamp01(t);
+}
 
 @ccclass('PlayerController')
 export class PlayerController extends Component {
@@ -8,6 +16,9 @@ export class PlayerController extends Component {
 
     @property({ tooltip: 'Tốc độ chạy khi giữ phím Shift (gấp đôi đi bộ = 5.0 m/s)' })
     public runSpeed: number = 5.0;
+
+    @property({ tooltip: 'Tốc độ xoay mặt nhân vật theo hướng di chuyển' })
+    public turnSpeed: number = 20.0;
 
     @property(Node)
     public cameraNode: Node | null = null;
@@ -26,8 +37,10 @@ export class PlayerController extends Component {
 
     private _inputDir: Vec3 = new Vec3();
     private _isMoving: boolean = false;
+    private _wasMoving: boolean = false;
     private _isShiftDown: boolean = false;
     private _currentAnimState: string = '';
+    private _cameraCtrl: CameraController | null = null;
 
     public get isMoving(): boolean {
         return this._isMoving;
@@ -63,6 +76,10 @@ export class PlayerController extends Component {
                 this.cameraNode = cam;
                 console.log('✅ [PlayerController] Đã tự động gán Camera Node là Main Camera!');
             }
+        }
+
+        if (this.cameraNode) {
+            this._cameraCtrl = this.cameraNode.getComponent(CameraController);
         }
 
         if (this.anim) {
@@ -147,39 +164,70 @@ export class PlayerController extends Component {
     }
 
     protected update(dt: number) {
+        if (!this._cameraCtrl && this.cameraNode) {
+            this._cameraCtrl = this.cameraNode.getComponent(CameraController);
+        }
+
         this._isMoving = (this._inputDir.lengthSqr() > 0.01);
 
         if (this._isMoving) {
-            const forward = new Vec3();
-            const right = new Vec3();
+            // Xác định góc lệch (offset) theo hướng phím ấn:
+            let offset = 0;
+            let isDiagonal = false;
 
-            // DI CHUYỂN CHUẨN THEO HƯỚNG CỦA PLAYER:
-            // Model Chibi này mặt hướng +Z trong local space nên Forward là (0, 0, 1) và Right là (-1, 0, 0)
-            const modelFwd = new Vec3(0, 0, 1);
-            const modelRight = new Vec3(-1, 0, 0);
+            if (this._inputDir.z > 0 && this._inputDir.x === 0) {
+                // W: Đi thẳng
+                offset = 0;
+            } else if (this._inputDir.z < 0 && this._inputDir.x === 0) {
+                // S: Quay mặt ra sau lưng 180 độ
+                offset = 180;
+            } else if (this._inputDir.z === 0 && this._inputDir.x > 0) {
+                // D: Quay mặt sang phải 90 độ
+                offset = -90;
+            } else if (this._inputDir.z === 0 && this._inputDir.x < 0) {
+                // A: Quay mặt sang trái 90 độ
+                offset = 90;
+            } else if (this._inputDir.z > 0 && this._inputDir.x > 0) {
+                // W + D: Quay mặt chéo trước - phải 45 độ
+                offset = -45;
+                isDiagonal = true;
+            } else if (this._inputDir.z > 0 && this._inputDir.x < 0) {
+                // W + A: Quay mặt chéo trước - trái 45 độ
+                offset = 45;
+                isDiagonal = true;
+            } else if (this._inputDir.z < 0 && this._inputDir.x > 0) {
+                // S + D: Quay mặt chéo sau - phải 135 độ
+                offset = -135;
+                isDiagonal = true;
+            } else if (this._inputDir.z < 0 && this._inputDir.x < 0) {
+                // S + A: Quay mặt chéo sau - trái 135 độ
+                offset = 135;
+                isDiagonal = true;
+            }
 
-            Vec3.transformQuat(forward, modelFwd, this.node.worldRotation);
-            Vec3.transformQuat(right, modelRight, this.node.worldRotation);
+            // Hướng mặt mục tiêu = Hướng nhìn cơ sở của Camera + Góc lệch
+            const baseYaw = this._cameraCtrl ? this._cameraCtrl.baseYaw : 0;
+            const targetYaw = baseYaw + offset;
 
+            // Xoay mặt nhân vật mượt mà theo hướng di chuyển:
+            const currentEuler = this.node.eulerAngles;
+            const newYaw = lerpAngleDeg(currentEuler.y, targetYaw, dt * this.turnSpeed);
+            this.node.setRotationFromEuler(0, newYaw, 0);
+
+            // Vector hướng di chuyển: Hướng trước mặt nhân vật (Model Chibi mặt hướng +Z)
+            const forward = new Vec3(0, 0, 1);
+            Vec3.transformQuat(forward, forward, this.node.worldRotation);
             forward.y = 0;
-            right.y = 0;
             forward.normalize();
-            right.normalize();
 
-            // Tốc độ di chuyển: Đi bộ bình thường = 2.5 m/s, Giữ Shift = 5.0 m/s (gấp đôi)
-            const speed = this._isShiftDown ? this.runSpeed : this.walkSpeed;
+            // Tốc độ di chuyển: Đi bộ = 2.5 m/s, Giữ Shift = 5.0 m/s (gấp đôi)
+            const baseSpeed = this._isShiftDown ? this.runSpeed : this.walkSpeed;
 
-            // Tính vận tốc theo từng trục:
-            // vz: Vận tốc thẳng / lùi theo hướng Player
-            // vx: Vận tốc ngang trái / phải theo hướng Player
-            const vz = forward.multiplyScalar(this._inputDir.z * speed);
-            const vx = right.multiplyScalar(this._inputDir.x * speed);
+            // Tốc độ đi chéo theo định lý Pytago: v_diagonal = sqrt(v^2 + v^2) = v * sqrt(2)
+            const currentSpeed = isDiagonal ? (baseSpeed * Math.SQRT2) : baseSpeed;
 
-            // Vector vận tốc tổng hợp:
-            // Khi đi chéo (W+A, W+D, S+A, S+D): tốc độ = sqrt(vz^2 + vx^2) = speed * sqrt(2) chuẩn Pytago!
-            const velocity = vz.add(vx);
-
-            // Cập nhật vị trí nhân vật
+            // Di chuyển vị trí nhân vật
+            const velocity = forward.multiplyScalar(currentSpeed);
             const moveStep = velocity.clone().multiplyScalar(dt);
             this.node.setPosition(this.node.position.clone().add(moveStep));
 
@@ -189,7 +237,23 @@ export class PlayerController extends Component {
             } else {
                 this.playAnimation('walk');
             }
+
+            this._wasMoving = true;
         } else {
+            // Khi dừng di chuyển:
+            if (this._wasMoving) {
+                // Đồng bộ lại hướng cơ sở của Camera theo hướng mặt hiện tại sau khi dừng
+                if (this._cameraCtrl) {
+                    this._cameraCtrl.baseYaw = this.node.eulerAngles.y;
+                }
+                this._wasMoving = false;
+            } else {
+                // Khi đứng yên và người chơi di chuột: Xoay mặt nhân vật theo chuột
+                if (this._cameraCtrl && !this._cameraCtrl.isFreeLooking) {
+                    this.node.setRotationFromEuler(0, this._cameraCtrl.baseYaw, 0);
+                }
+            }
+
             // Đứng yên -> Thở (idle)
             this.playAnimation('idle');
         }
