@@ -277,8 +277,9 @@
     "minDistance": 3,
     "maxDistance": 15,
     "sensitivity": 0.25,
-    "minPitch": -15,
-    "maxPitch": 65,
+    "basePitch": 8,
+    "returnSpeed": 16,
+    "minGroundHeight": 0.3,
     "targetOffset": {
       "__type__": "cc.Vec3",
       "x": 0,
@@ -2015,7 +2016,9 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "moveSpeed": 5,
+    "walkSpeed": 2.5,
+    "runSpeed": 5,
+    "turnSpeed": 20,
     "cameraNode": {
       "__id__": 5
     },

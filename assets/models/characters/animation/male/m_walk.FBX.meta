@@ -21,7 +21,13 @@
           "from": 0,
           "to": 0.8333333134651184
         },
-        "events": []
+        "events": [],
+        "embeddedPlayers": [],
+        "editorExtras": {
+          "embeddedPlayerGroups": []
+        },
+        "speed": 1,
+        "auxiliaryCurves": {}
       },
       "ver": "1.0.17",
       "imported": true,
