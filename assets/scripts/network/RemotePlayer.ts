@@ -61,8 +61,11 @@ export class RemotePlayer extends Component {
             const clips = this.anim.clips;
             if (clips && clips.length > 0) {
                 const target = clips.find(c => c && c.name.toLowerCase().includes(clipName));
-                if (target && !this.anim.getState(target.name).isPlaying) {
-                    this.anim.play(target.name);
+                if (target) {
+                    const state = this.anim.getState(target.name);
+                    if (!state || !state.isPlaying) {
+                        this.anim.play(target.name);
+                    }
                 }
             }
         }
