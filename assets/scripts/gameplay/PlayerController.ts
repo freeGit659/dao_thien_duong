@@ -1,13 +1,10 @@
-import { _decorator, Component, Node, Vec3, Quat, input, Input, EventKeyboard, KeyCode, SkeletalAnimation, find } from 'cc';
+import { _decorator, Component, Node, Vec3, input, Input, EventKeyboard, KeyCode, SkeletalAnimation, AnimationClip, find } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('PlayerController')
 export class PlayerController extends Component {
-    @property
-    public moveSpeed: number = 6.0;
-
-    @property
-    public rotateSpeed: number = 10.0;
+    @property({ tooltip: 'Tốc độ di chuyển chạy (m/s)' })
+    public moveSpeed: number = 5.0;
 
     @property(Node)
     public cameraNode: Node | null = null;
@@ -15,11 +12,18 @@ export class PlayerController extends Component {
     @property(SkeletalAnimation)
     public anim: SkeletalAnimation | null = null;
 
+    @property({ type: AnimationClip, tooltip: 'Animation đứng thở/chờ (m_idle_A)' })
+    public idleClip: AnimationClip | null = null;
+
+    @property({ type: AnimationClip, tooltip: 'Animation chạy nhanh (m_run)' })
+    public runClip: AnimationClip | null = null;
+
+    @property({ type: AnimationClip, tooltip: 'Animation đi bộ (m_walk)' })
+    public walkClip: AnimationClip | null = null;
+
     private _inputDir: Vec3 = new Vec3();
-    private _velocity: Vec3 = new Vec3();
-    private _targetRotation: Quat = new Quat();
     private _isMoving: boolean = false;
-    private _currentAnimState: string = 'idle';
+    private _currentAnimState: string = '';
 
     public get isMoving(): boolean {
         return this._isMoving;
@@ -30,7 +34,7 @@ export class PlayerController extends Component {
         input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
 
         if (!this.anim) {
-            this.anim = this.getComponentInChildren(SkeletalAnimation);
+            this.anim = this.getComponent(SkeletalAnimation) || this.getComponentInChildren(SkeletalAnimation);
         }
     }
 
@@ -41,6 +45,31 @@ export class PlayerController extends Component {
                 this.cameraNode = cam;
                 console.log('✅ [PlayerController] Đã tự động gán Camera Node là Main Camera!');
             }
+        }
+
+        if (this.anim) {
+            // Tắt Baked Animation để hỗ trợ nạp Animation từ các file FBX bên ngoài
+            this.anim.useBakedAnimation = false;
+
+            // Đăng ký các Clip với tên chuẩn 'idle', 'run', 'walk' và đặt chế độ Loop
+            if (this.idleClip) {
+                this.anim.addClip(this.idleClip, 'idle');
+                const state = this.anim.getState('idle');
+                if (state) state.wrapMode = AnimationClip.WrapMode.Loop;
+            }
+            if (this.runClip) {
+                this.anim.addClip(this.runClip, 'run');
+                const state = this.anim.getState('run');
+                if (state) state.wrapMode = AnimationClip.WrapMode.Loop;
+            }
+            if (this.walkClip) {
+                this.anim.addClip(this.walkClip, 'walk');
+                const state = this.anim.getState('walk');
+                if (state) state.wrapMode = AnimationClip.WrapMode.Loop;
+            }
+
+            // Bắt đầu bằng Animation Idle
+            this.playAnimation('idle');
         }
     }
 
@@ -117,8 +146,10 @@ export class PlayerController extends Component {
             const moveStep = moveDir.clone().multiplyScalar(this.moveSpeed * dt);
             this.node.setPosition(this.node.position.clone().add(moveStep));
 
+            // Chạy Animation Run khi đang di chuyển
             this.playAnimation('run');
         } else {
+            // Chạy Animation Idle khi đứng yên
             this.playAnimation('idle');
         }
     }
@@ -128,12 +159,21 @@ export class PlayerController extends Component {
         this._currentAnimState = name;
 
         if (this.anim) {
-            // Tự động tìm clip phù hợp nếu có
-            const clips = this.anim.clips;
-            if (clips && clips.length > 0) {
-                const targetClip = clips.find(c => c && c.name.toLowerCase().includes(name));
-                if (targetClip) {
-                    this.anim.play(targetClip.name);
+            const state = this.anim.getState(name);
+            if (state) {
+                if (!state.isPlaying) {
+                    this.anim.play(name);
+                }
+            } else {
+                // Tự động tìm clip theo tên nếu có sẵn trong component
+                const clips = this.anim.clips;
+                if (clips && clips.length > 0) {
+                    const found = clips.find(c => c && c.name.toLowerCase().includes(name));
+                    if (found) {
+                        this.anim.play(found.name);
+                    } else {
+                        this.anim.play(clips[0].name);
+                    }
                 }
             }
         }
