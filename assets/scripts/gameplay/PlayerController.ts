@@ -98,9 +98,11 @@ export class PlayerController extends Component {
             const forward = new Vec3();
             const right = new Vec3();
 
-            // Lấy hướng di chuyển trực tiếp từ hướng mặt của nhân vật (chuẩn PUBG)
-            Vec3.transformQuat(forward, Vec3.FORWARD, this.node.worldRotation);
-            Vec3.transformQuat(right, Vec3.RIGHT, this.node.worldRotation);
+            // Model Chibi này mặt hướng +Z nên vector Forward là (0, 0, 1) và Right là (-1, 0, 0)
+            const modelFwd = new Vec3(0, 0, 1);
+            const modelRight = new Vec3(-1, 0, 0);
+            Vec3.transformQuat(forward, modelFwd, this.node.worldRotation);
+            Vec3.transformQuat(right, modelRight, this.node.worldRotation);
 
             forward.y = 0;
             right.y = 0;
