@@ -1,0 +1,146 @@
+{
+  "ver": "2.3.13",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "c7268dc7-7b38-45af-a216-52bf07f0ad52",
+  "files": [],
+  "subMetas": {
+    "c1084": {
+      "importer": "gltf-mesh",
+      "uuid": "c7268dc7-7b38-45af-a216-52bf07f0ad52@c1084",
+      "displayName": "",
+      "id": "c1084",
+      "name": "Plane.004.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 98
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "48b02": {
+      "importer": "gltf-embeded-image",
+      "uuid": "c7268dc7-7b38-45af-a216-52bf07f0ad52@48b02",
+      "displayName": "",
+      "id": "48b02",
+      "name": "base_color_texture.image",
+      "userData": {
+        "gltfIndex": 0,
+        "fixAlphaTransparencyArtifacts": true,
+        "hasAlpha": true,
+        "type": "texture"
+      },
+      "ver": "1.0.3",
+      "imported": true,
+      "files": [
+        ".json",
+        ".png"
+      ],
+      "subMetas": {}
+    },
+    "7d6ab": {
+      "importer": "texture",
+      "uuid": "c7268dc7-7b38-45af-a216-52bf07f0ad52@7d6ab",
+      "displayName": "",
+      "id": "7d6ab",
+      "name": "base_color_texture.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "c7268dc7-7b38-45af-a216-52bf07f0ad52@48b02"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "c0df7": {
+      "importer": "gltf-material",
+      "uuid": "c7268dc7-7b38-45af-a216-52bf07f0ad52@c0df7",
+      "displayName": "",
+      "id": "c0df7",
+      "name": "texture main.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "a1497": {
+      "importer": "gltf-scene",
+      "uuid": "c7268dc7-7b38-45af-a216-52bf07f0ad52@a1497",
+      "displayName": "",
+      "id": "a1497",
+      "name": "paved road straight.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [
+      {
+        "name": "base_color_texture",
+        "uri": "c7268dc7-7b38-45af-a216-52bf07f0ad52@48b02"
+      }
+    ],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "c7268dc7-7b38-45af-a216-52bf07f0ad52@c1084"
+      ],
+      "skeletons": [],
+      "textures": [
+        "c7268dc7-7b38-45af-a216-52bf07f0ad52@7d6ab"
+      ],
+      "materials": [
+        "c7268dc7-7b38-45af-a216-52bf07f0ad52@c0df7"
+      ],
+      "scenes": [
+        "c7268dc7-7b38-45af-a216-52bf07f0ad52@a1497"
+      ]
+    }
+  }
+}

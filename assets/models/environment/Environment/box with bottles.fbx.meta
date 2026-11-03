@@ -1,0 +1,146 @@
+{
+  "ver": "2.3.13",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "ccab6d70-7cf8-40a4-b306-80e9849d4f21",
+  "files": [],
+  "subMetas": {
+    "bf857": {
+      "importer": "gltf-mesh",
+      "uuid": "ccab6d70-7cf8-40a4-b306-80e9849d4f21@bf857",
+      "displayName": "",
+      "id": "bf857",
+      "name": "box_with_bottles.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 610
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "7a1f5": {
+      "importer": "gltf-embeded-image",
+      "uuid": "ccab6d70-7cf8-40a4-b306-80e9849d4f21@7a1f5",
+      "displayName": "",
+      "id": "7a1f5",
+      "name": "texture_main.png.image",
+      "userData": {
+        "gltfIndex": 0,
+        "fixAlphaTransparencyArtifacts": true,
+        "hasAlpha": false,
+        "type": "texture"
+      },
+      "ver": "1.0.3",
+      "imported": true,
+      "files": [
+        ".json",
+        ".png"
+      ],
+      "subMetas": {}
+    },
+    "acd34": {
+      "importer": "texture",
+      "uuid": "ccab6d70-7cf8-40a4-b306-80e9849d4f21@acd34",
+      "displayName": "",
+      "id": "acd34",
+      "name": "texture_main.png.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "ccab6d70-7cf8-40a4-b306-80e9849d4f21@7a1f5"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "940dc": {
+      "importer": "gltf-material",
+      "uuid": "ccab6d70-7cf8-40a4-b306-80e9849d4f21@940dc",
+      "displayName": "",
+      "id": "940dc",
+      "name": "texture_main.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f6604": {
+      "importer": "gltf-scene",
+      "uuid": "ccab6d70-7cf8-40a4-b306-80e9849d4f21@f6604",
+      "displayName": "",
+      "id": "f6604",
+      "name": "box with bottles.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [
+      {
+        "name": "texture_main.png",
+        "uri": "ccab6d70-7cf8-40a4-b306-80e9849d4f21@7a1f5"
+      }
+    ],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "ccab6d70-7cf8-40a4-b306-80e9849d4f21@bf857"
+      ],
+      "skeletons": [],
+      "textures": [
+        "ccab6d70-7cf8-40a4-b306-80e9849d4f21@acd34"
+      ],
+      "materials": [
+        "ccab6d70-7cf8-40a4-b306-80e9849d4f21@940dc"
+      ],
+      "scenes": [
+        "ccab6d70-7cf8-40a4-b306-80e9849d4f21@f6604"
+      ]
+    }
+  }
+}

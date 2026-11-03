@@ -1,0 +1,146 @@
+{
+  "ver": "2.3.13",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "22364259-41c0-46e5-aa87-949320d908ff",
+  "files": [],
+  "subMetas": {
+    "2932f": {
+      "importer": "gltf-mesh",
+      "uuid": "22364259-41c0-46e5-aa87-949320d908ff@2932f",
+      "displayName": "",
+      "id": "2932f",
+      "name": "Plane.249.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 164
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "48b02": {
+      "importer": "gltf-embeded-image",
+      "uuid": "22364259-41c0-46e5-aa87-949320d908ff@48b02",
+      "displayName": "",
+      "id": "48b02",
+      "name": "base_color_texture.image",
+      "userData": {
+        "gltfIndex": 0,
+        "fixAlphaTransparencyArtifacts": true,
+        "hasAlpha": true,
+        "type": "texture"
+      },
+      "ver": "1.0.3",
+      "imported": true,
+      "files": [
+        ".json",
+        ".png"
+      ],
+      "subMetas": {}
+    },
+    "7d6ab": {
+      "importer": "texture",
+      "uuid": "22364259-41c0-46e5-aa87-949320d908ff@7d6ab",
+      "displayName": "",
+      "id": "7d6ab",
+      "name": "base_color_texture.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "22364259-41c0-46e5-aa87-949320d908ff@48b02"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "c0df7": {
+      "importer": "gltf-material",
+      "uuid": "22364259-41c0-46e5-aa87-949320d908ff@c0df7",
+      "displayName": "",
+      "id": "c0df7",
+      "name": "texture main.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "7ff74": {
+      "importer": "gltf-scene",
+      "uuid": "22364259-41c0-46e5-aa87-949320d908ff@7ff74",
+      "displayName": "",
+      "id": "7ff74",
+      "name": "asphalt ground small wide.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [
+      {
+        "name": "base_color_texture",
+        "uri": "22364259-41c0-46e5-aa87-949320d908ff@48b02"
+      }
+    ],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "22364259-41c0-46e5-aa87-949320d908ff@2932f"
+      ],
+      "skeletons": [],
+      "textures": [
+        "22364259-41c0-46e5-aa87-949320d908ff@7d6ab"
+      ],
+      "materials": [
+        "22364259-41c0-46e5-aa87-949320d908ff@c0df7"
+      ],
+      "scenes": [
+        "22364259-41c0-46e5-aa87-949320d908ff@7ff74"
+      ]
+    }
+  }
+}

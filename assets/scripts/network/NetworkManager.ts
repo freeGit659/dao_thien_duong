@@ -41,38 +41,46 @@ export class NetworkManager extends Component {
     }
 
     public connect() {
-        console.log(`[NetworkManager] Đang kết nối tới máy chủ: ${this.serverUrl}`);
-        this._ws = new WebSocket(this.serverUrl);
+        try {
+            console.log(`[NetworkManager] Đang kết nối tới máy chủ: ${this.serverUrl}`);
+            this._ws = new WebSocket(this.serverUrl);
 
-        this._ws.onopen = () => {
-            console.log(`✅ [NetworkManager] Kết nối WebSocket thành công với ID: ${this._myId} (${this._myName})`);
-            const pos = this.localPlayer ? this.localPlayer.worldPosition : new Vec3(0, 0, 0);
+            this._ws.onopen = () => {
+                console.log(`✅ [NetworkManager] Kết nối WebSocket thành công với ID: ${this._myId} (${this._myName})`);
+                const pos = this.localPlayer ? this.localPlayer.worldPosition : new Vec3(0, 0, 0);
 
-            // Gửi gói Join Khu 1
-            this.send({
-                type: 'join',
-                playerId: this._myId,
-                playerName: this._myName,
-                zoneId: 1,
-                x: pos.x,
-                y: pos.y,
-                z: pos.z,
-                rotY: this.localPlayer ? this.localPlayer.eulerAngles.y : 0
-            });
-        };
+                // Gửi gói Join Khu 1
+                this.send({
+                    type: 'join',
+                    playerId: this._myId,
+                    playerName: this._myName,
+                    zoneId: 1,
+                    x: pos.x,
+                    y: pos.y,
+                    z: pos.z,
+                    rotY: this.localPlayer ? this.localPlayer.eulerAngles.y : 0
+                });
+            };
 
-        this._ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                this.handleMessage(msg);
-            } catch (e) {
-                console.error('[NetworkManager] Lỗi đọc gói tin:', e);
-            }
-        };
+            this._ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    this.handleMessage(msg);
+                } catch (e) {
+                    console.error('[NetworkManager] Lỗi đọc gói tin:', e);
+                }
+            };
 
-        this._ws.onclose = () => {
-            console.log('[NetworkManager] Mất kết nối tới server.');
-        };
+            this._ws.onerror = () => {
+                console.warn(`💡 [NetworkManager] Chưa kết nối được Server (${this.serverUrl}). Sếp chỉ cần click đúp vào file Server/run_server.bat là xong ngay!`);
+            };
+
+            this._ws.onclose = () => {
+                console.log('[NetworkManager] Đã đóng kết nối tới server.');
+            };
+        } catch (e) {
+            console.warn('[NetworkManager] Không thể kết nối WebSocket:', e);
+        }
     }
 
     private handleMessage(msg: any) {

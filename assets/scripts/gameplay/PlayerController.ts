@@ -91,15 +91,19 @@ export class PlayerController extends Component {
             if (this.cameraNode) {
                 const forward = new Vec3();
                 const right = new Vec3();
-                this.cameraNode.getForward(forward);
-                this.cameraNode.getRight(right);
+
+                // Chuẩn Cocos Creator 3.8: Lấy hướng forward và right từ worldRotation của Camera
+                Vec3.transformQuat(forward, Vec3.FORWARD, this.cameraNode.worldRotation);
+                Vec3.transformQuat(right, Vec3.RIGHT, this.cameraNode.worldRotation);
 
                 forward.y = 0;
                 right.y = 0;
                 forward.normalize();
                 right.normalize();
 
-                moveDir = right.multiplyScalar(this._inputDir.x).add(forward.multiplyScalar(this._inputDir.z)).normalize();
+                const moveZ = forward.multiplyScalar(this._inputDir.z);
+                const moveX = right.multiplyScalar(this._inputDir.x);
+                moveDir = moveZ.add(moveX).normalize();
             }
 
             // Di chuyển vị trí Node

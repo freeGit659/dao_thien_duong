@@ -1,0 +1,184 @@
+{
+  "ver": "2.3.13",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "5115bd18-6149-460e-a59d-a9713b2edcd1",
+  "files": [],
+  "subMetas": {
+    "7bf39": {
+      "importer": "gltf-mesh",
+      "uuid": "5115bd18-6149-460e-a59d-a9713b2edcd1@7bf39",
+      "displayName": "",
+      "id": "7bf39",
+      "name": "Z_head_02.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 50
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "c7d14": {
+      "importer": "gltf-mesh",
+      "uuid": "5115bd18-6149-460e-a59d-a9713b2edcd1@c7d14",
+      "displayName": "",
+      "id": "c7d14",
+      "name": "Body_01_tanktop.mesh",
+      "userData": {
+        "gltfIndex": 1,
+        "triangleCount": 284
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "438fe": {
+      "importer": "gltf-skeleton",
+      "uuid": "5115bd18-6149-460e-a59d-a9713b2edcd1@438fe",
+      "displayName": "",
+      "id": "438fe",
+      "name": "UnnamedSkeleton.skeleton",
+      "userData": {
+        "gltfIndex": 0,
+        "jointsLength": 15
+      },
+      "ver": "1.0.1",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "d4f45": {
+      "importer": "gltf-embeded-image",
+      "uuid": "5115bd18-6149-460e-a59d-a9713b2edcd1@d4f45",
+      "displayName": "",
+      "id": "d4f45",
+      "name": "Map #2.image",
+      "userData": {
+        "gltfIndex": 0,
+        "fixAlphaTransparencyArtifacts": true,
+        "hasAlpha": true,
+        "type": "texture"
+      },
+      "ver": "1.0.3",
+      "imported": true,
+      "files": [
+        ".json",
+        ".png"
+      ],
+      "subMetas": {}
+    },
+    "1da29": {
+      "importer": "texture",
+      "uuid": "5115bd18-6149-460e-a59d-a9713b2edcd1@1da29",
+      "displayName": "",
+      "id": "1da29",
+      "name": "Map #2.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "5115bd18-6149-460e-a59d-a9713b2edcd1@d4f45"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "ee0e6": {
+      "importer": "gltf-material",
+      "uuid": "5115bd18-6149-460e-a59d-a9713b2edcd1@ee0e6",
+      "displayName": "",
+      "id": "ee0e6",
+      "name": "TT_demo.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "1221e": {
+      "importer": "gltf-scene",
+      "uuid": "5115bd18-6149-460e-a59d-a9713b2edcd1@1221e",
+      "displayName": "",
+      "id": "1221e",
+      "name": "TT_demo_zombie.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [
+      {
+        "name": "Map #2",
+        "uri": "5115bd18-6149-460e-a59d-a9713b2edcd1@d4f45"
+      }
+    ],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "5115bd18-6149-460e-a59d-a9713b2edcd1@7bf39",
+        "5115bd18-6149-460e-a59d-a9713b2edcd1@c7d14"
+      ],
+      "skeletons": [
+        "5115bd18-6149-460e-a59d-a9713b2edcd1@438fe"
+      ],
+      "textures": [
+        "5115bd18-6149-460e-a59d-a9713b2edcd1@1da29"
+      ],
+      "materials": [
+        "5115bd18-6149-460e-a59d-a9713b2edcd1@ee0e6"
+      ],
+      "scenes": [
+        "5115bd18-6149-460e-a59d-a9713b2edcd1@1221e"
+      ]
+    }
+  }
+}

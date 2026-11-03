@@ -1,0 +1,146 @@
+{
+  "ver": "2.3.13",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "eaa44abe-2780-40b9-9cd6-105433b248d8",
+  "files": [],
+  "subMetas": {
+    "e3d42": {
+      "importer": "gltf-mesh",
+      "uuid": "eaa44abe-2780-40b9-9cd6-105433b248d8@e3d42",
+      "displayName": "",
+      "id": "e3d42",
+      "name": "brewery_house.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 3600
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "7a1f5": {
+      "importer": "gltf-embeded-image",
+      "uuid": "eaa44abe-2780-40b9-9cd6-105433b248d8@7a1f5",
+      "displayName": "",
+      "id": "7a1f5",
+      "name": "texture_main.png.image",
+      "userData": {
+        "gltfIndex": 0,
+        "fixAlphaTransparencyArtifacts": true,
+        "hasAlpha": false,
+        "type": "texture"
+      },
+      "ver": "1.0.3",
+      "imported": true,
+      "files": [
+        ".json",
+        ".png"
+      ],
+      "subMetas": {}
+    },
+    "acd34": {
+      "importer": "texture",
+      "uuid": "eaa44abe-2780-40b9-9cd6-105433b248d8@acd34",
+      "displayName": "",
+      "id": "acd34",
+      "name": "texture_main.png.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "eaa44abe-2780-40b9-9cd6-105433b248d8@7a1f5"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "940dc": {
+      "importer": "gltf-material",
+      "uuid": "eaa44abe-2780-40b9-9cd6-105433b248d8@940dc",
+      "displayName": "",
+      "id": "940dc",
+      "name": "texture_main.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "04d19": {
+      "importer": "gltf-scene",
+      "uuid": "eaa44abe-2780-40b9-9cd6-105433b248d8@04d19",
+      "displayName": "",
+      "id": "04d19",
+      "name": "brewery house.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [
+      {
+        "name": "texture_main.png",
+        "uri": "eaa44abe-2780-40b9-9cd6-105433b248d8@7a1f5"
+      }
+    ],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "eaa44abe-2780-40b9-9cd6-105433b248d8@e3d42"
+      ],
+      "skeletons": [],
+      "textures": [
+        "eaa44abe-2780-40b9-9cd6-105433b248d8@acd34"
+      ],
+      "materials": [
+        "eaa44abe-2780-40b9-9cd6-105433b248d8@940dc"
+      ],
+      "scenes": [
+        "eaa44abe-2780-40b9-9cd6-105433b248d8@04d19"
+      ]
+    }
+  }
+}
