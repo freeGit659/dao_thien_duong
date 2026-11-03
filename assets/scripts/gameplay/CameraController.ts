@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Quat, input, Input, EventMouse, math, game, find } from 'cc';
+import { _decorator, Component, Node, Vec3, input, Input, EventMouse, math, game, find } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('CameraController')
@@ -18,11 +18,14 @@ export class CameraController extends Component {
     @property
     public sensitivity: number = 0.2;
 
-    @property
-    public minPitch: number = -15;
+    @property({ tooltip: 'Góc nhìn tối thiểu từ trên xuống (độ), luôn > 0 để không bị xuyên đất' })
+    public minPitch: number = 5.0;
 
-    @property
-    public maxPitch: number = 65;
+    @property({ tooltip: 'Góc nhìn tối đa từ trên đỉnh đầu xuống (độ)' })
+    public maxPitch: number = 75.0;
+
+    @property({ tooltip: 'Độ cao tối thiểu so với mặt đất (mét)' })
+    public minGroundHeight: number = 0.5;
 
     @property
     public targetOffset: Vec3 = new Vec3(0, 1.2, 0);
@@ -30,8 +33,9 @@ export class CameraController extends Component {
     @property
     public invertY: boolean = false;
 
+    // Khởi tạo góc nhìn chuẩn: Yaw = 0, Pitch = 25 độ (nhìn từ trên chéo xuống sau lưng nhân vật)
     private _yaw: number = 0;
-    private _pitch: number = 20;
+    private _pitch: number = 25;
     private _isMouseDown: boolean = false;
     private _isPointerLocked: boolean = false;
 
@@ -110,9 +114,13 @@ export class CameraController extends Component {
             const dx = event.getDeltaX();
             const dy = event.getDeltaY();
 
+            // Xoay ngang (Yaw)
             this._yaw -= dx * this.sensitivity;
 
-            const pitchDelta = this.invertY ? (dy * this.sensitivity) : (-dy * this.sensitivity);
+            // Xoay dọc (Pitch): nhìn từ trên xuống
+            // Di chuột lên -> nhìn ngước lên (pitch giảm về phía chân trời)
+            // Di chuột xuống -> nhìn chúc xuống (pitch tăng nhìn từ trên đỉnh đầu)
+            const pitchDelta = this.invertY ? (-dy * this.sensitivity) : (dy * this.sensitivity);
             this._pitch += pitchDelta;
             this._pitch = math.clamp(this._pitch, this.minPitch, this.maxPitch);
         }
@@ -126,15 +134,33 @@ export class CameraController extends Component {
     protected lateUpdate(dt: number) {
         if (!this.target) return;
 
-        // Tính toán vị trí Camera quay quanh tâm hình cầu theo Yaw & Pitch
-        const rotation = new Quat();
-        Quat.fromEuler(rotation, this._pitch, this._yaw, 0);
-
         const focusPoint = this.target.worldPosition.clone().add(this.targetOffset);
-        const offset = new Vec3(0, 0, this.distance);
-        Vec3.transformQuat(offset, offset, rotation);
 
-        this.node.setWorldPosition(focusPoint.add(offset));
-        this.node.setWorldRotation(rotation);
+        // Chuyển đổi tọa độ cầu: Yaw (ngang) và Pitch (dọc)
+        const yawRad = math.toRadian(this._yaw);
+        const pitchRad = math.toRadian(this._pitch);
+
+        // Tính khoảng cách theo góc nhìn từ trên chéo xuống
+        const yOffset = this.distance * Math.sin(pitchRad);
+        const hDist = this.distance * Math.cos(pitchRad);
+
+        const xOffset = hDist * Math.sin(yawRad);
+        const zOffset = hDist * Math.cos(yawRad);
+
+        const camPos = new Vec3(
+            focusPoint.x + xOffset,
+            focusPoint.y + yOffset,
+            focusPoint.z + zOffset
+        );
+
+        // Giới hạn mặt đất: Camera KHÔNG BAO GIỜ bị tụt xuống dưới mặt đất
+        if (camPos.y < this.minGroundHeight) {
+            camPos.y = this.minGroundHeight;
+        }
+
+        this.node.setWorldPosition(camPos);
+
+        // Camera luôn hướng thẳng mắt vào nhân vật
+        this.node.lookAt(focusPoint, Vec3.UP);
     }
 }
