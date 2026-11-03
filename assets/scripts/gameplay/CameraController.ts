@@ -7,7 +7,7 @@ export class CameraController extends Component {
     public target: Node | null = null;
 
     @property({ tooltip: 'Khoảng cách camera tới nhân vật (PUBG: 2.5m - 2.8m)' })
-    public distance: number = 2.6;
+    public distance: number = 2.8;
 
     @property
     public minDistance: number = 1.5;
@@ -18,8 +18,8 @@ export class CameraController extends Component {
     @property
     public sensitivity: number = 0.22;
 
-    @property({ tooltip: 'Góc nghiêng mặc định ngang tầm mắt/vai nhìn ra chân trời (PUBG: 8 độ)' })
-    public basePitch: number = 8.0;
+    @property({ tooltip: 'Góc nghiêng mặc định nhìn từ trên chéo xuống (độ)' })
+    public basePitch: number = 12.0;
 
     @property({ tooltip: 'Tốc độ camera trả về sau gáy khi thả nút Alt' })
     public returnSpeed: number = 16.0;
@@ -27,12 +27,13 @@ export class CameraController extends Component {
     @property({ tooltip: 'Độ cao tối thiểu so với mặt đất (mét)' })
     public minGroundHeight: number = 0.3;
 
-    @property({ tooltip: 'Tâm ngắm ngang cổ/vai nhân vật, lệch nhẹ sang vai phải chuẩn PUBG' })
-    public targetOffset: Vec3 = new Vec3(0.15, 1.15, 0);
+    @property({ tooltip: 'Tâm ngắm ngang cổ/vai nhân vật chuẩn góc nhìn thứ 3' })
+    public targetOffset: Vec3 = new Vec3(0, 1.25, 0);
 
     @property
     public invertY: boolean = false;
 
+    private _yaw: number = 0;
     // Góc lệch khi người chơi đè phím Alt (Free Look)
     private _freeLookYaw: number = 0;
     private _freeLookPitch: number = 0;
@@ -120,24 +121,20 @@ export class CameraController extends Component {
         const dy = event.getDeltaY();
 
         if (this._isAltDown) {
-            // ĐANG GIỮ ALT (Free Look): Chỉ xoay Camera vòng quanh người
+            // ĐANG GIỮ ALT (Free Look): Chỉ xoay Camera lệch quanh góc hiện tại
             this._freeLookYaw -= dx * this.sensitivity;
 
             const pitchDelta = this.invertY ? (-dy * this.sensitivity) : (dy * this.sensitivity);
             this._freeLookPitch += pitchDelta;
             this._freeLookPitch = math.clamp(this._freeLookPitch, -30.0, 50.0);
         } else {
-            // KHÔNG GIỮ ALT (Góc nhìn thực tế PUBG): Di chuột làm xoay mặt nhân vật!
-            if (this.target) {
-                const currentEuler = this.target.eulerAngles;
-                const newYaw = currentEuler.y - dx * this.sensitivity;
-                this.target.setRotationFromEuler(0, newYaw, 0);
-            }
+            // KHÔNG GIỮ ALT: Xoay góc nhìn Camera 360 độ quanh nhân vật
+            this._yaw -= dx * this.sensitivity;
 
             // Điều chỉnh góc ngước lên / nhìn xuống (Pitch)
             const pitchDelta = this.invertY ? (-dy * this.sensitivity) : (dy * this.sensitivity);
             this.basePitch += pitchDelta;
-            this.basePitch = math.clamp(this.basePitch, -20.0, 55.0);
+            this.basePitch = math.clamp(this.basePitch, -15.0, 60.0);
         }
     }
 
@@ -149,7 +146,7 @@ export class CameraController extends Component {
     protected lateUpdate(dt: number) {
         if (!this.target) return;
 
-        // Khi KHÔNG giữ Alt: trả góc Free Look mượt mà về 0 (góc nhìn sau lưng chuẩn PUBG)
+        // Khi KHÔNG giữ Alt: trả góc Free Look mượt mà về 0 (góc nhìn chính diện)
         if (!this._isAltDown) {
             this._freeLookYaw = math.lerp(this._freeLookYaw, 0, dt * this.returnSpeed);
             this._freeLookPitch = math.lerp(this._freeLookPitch, 0, dt * this.returnSpeed);
@@ -159,30 +156,23 @@ export class CameraController extends Component {
 
         const focusPoint = this.target.worldPosition.clone().add(this.targetOffset);
 
-        // Vector hướng sau lưng nhân vật (Model Chibi này mặt hướng +Z nên sau lưng là -Z)
-        const backDir = new Vec3(0, 0, -1);
-        Vec3.transformQuat(backDir, backDir, this.target.worldRotation);
-        backDir.y = 0;
-        backDir.normalize();
+        // Tọa độ cầu: Yaw (ngang) và Pitch (dọc)
+        const totalYaw = this._yaw + this._freeLookYaw;
+        const totalPitch = math.clamp(this.basePitch + this._freeLookPitch, -15.0, 65.0);
 
-        // Xoay quanh người khi đè phím Alt (hoặc lúc đang lượn trả về)
-        if (this._freeLookYaw !== 0) {
-            const rotY = new Quat();
-            Quat.fromAxisAngle(rotY, Vec3.UP, math.toRadian(this._freeLookYaw));
-            Vec3.transformQuat(backDir, backDir, rotY);
-        }
-
-        // Tính toán độ cao và khoảng cách lùi sau gáy
-        const totalPitch = math.clamp(this.basePitch + this._freeLookPitch, -20.0, 60.0);
+        const yawRad = math.toRadian(totalYaw);
         const pitchRad = math.toRadian(totalPitch);
 
         const yOffset = this.distance * Math.sin(pitchRad);
         const hDist = this.distance * Math.cos(pitchRad);
 
+        const xOffset = hDist * Math.sin(yawRad);
+        const zOffset = hDist * Math.cos(yawRad);
+
         const camPos = new Vec3(
-            focusPoint.x + backDir.x * hDist,
+            focusPoint.x + xOffset,
             focusPoint.y + yOffset,
-            focusPoint.z + backDir.z * hDist
+            focusPoint.z + zOffset
         );
 
         // Chống kẹt đất
@@ -192,8 +182,7 @@ export class CameraController extends Component {
 
         this.node.setWorldPosition(camPos);
 
-        // Hướng mắt nhìn về phía trước qua đầu nhân vật
-        const lookTarget = focusPoint.clone().add(new Vec3(0, 0.2, 0));
-        this.node.lookAt(lookTarget, Vec3.UP);
+        // Camera luôn hướng mắt vào nhân vật
+        this.node.lookAt(focusPoint, Vec3.UP);
     }
 }
