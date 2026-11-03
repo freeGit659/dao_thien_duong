@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌴 Đảo Thiên Đường - Web Test Client</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .card { background: #1e293b; border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 520px; text-align: center; border: 1px solid #334155; }
+        h1 { color: #fde047; font-size: 24px; margin-bottom: 8px; }
+        p.subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+        .status-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 16px; background: #ef4444; color: white; }
+        .status-badge.connected { background: #22c55e; }
+        
+        #radar { background: #022c22; border: 3px solid #10b981; border-radius: 12px; margin: 0 auto 16px; display: block; box-shadow: inset 0 0 20px rgba(0,0,0,0.6); }
+        .instructions { background: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px; color: #cbd5e1; margin-bottom: 16px; text-align: left; border: 1px dashed #475569; }
+        
+        .controls-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 220px; margin: 0 auto 16px; }
+        .btn-ctrl { background: #3b82f6; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; user-select: none; transition: 0.1s; }
+        .btn-ctrl:active { background: #1d4ed8; transform: scale(0.95); }
+        .btn-ctrl.empty { background: transparent; cursor: default; }
+
+        .player-info { font-size: 14px; color: #38bdf8; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>🌴 ĐẢO THIÊN ĐƯỜNG</h1>
+    <p class="subtitle">Web Client Test Multiplayer (Không cần Build Unity!)</p>
+    <div id="status" class="status-badge">Đang kết nối WebSocket...</div>
+
+    <!-- Radar mô phỏng công viên thành phố 45x45m -->
+    <canvas id="radar" width="340" height="340"></canvas>
+
+    <div class="instructions">
+        💡 <b>Cách test:</b> Dùng phím <b>W, A, S, D</b> hoặc các nút bấm bên dưới để điều khiển nhân vật Web.
+        <br>👉 Hãy nhìn vào <b>Unity Editor</b>: Bạn sẽ thấy nhân vật Web này chạy tung tăng trong thành phố 3D!
+    </div>
+
+    <!-- Bàn phím điều khiển ảo -->
+    <div class="controls-grid">
+        <div class="btn-ctrl empty"></div>
+        <button class="btn-ctrl" id="btnW">▲</button>
+        <div class="btn-ctrl empty"></div>
+        <button class="btn-ctrl" id="btnA">◄</button>
+        <button class="btn-ctrl" id="btnS">▼</button>
+        <button class="btn-ctrl" id="btnD">►</button>
+    </div>
+
+    <div class="player-info" id="playerTag">Đang tạo nhân vật...</div>
+</div>
+
+<script>
+    const canvas = document.getElementById('radar');
+    const ctx = canvas.getContext('2d');
+    const statusBadge = document.getElementById('status');
+    const playerTag = document.getElementById('playerTag');
+
+    // Tọa độ người chơi Web (Bắt đầu tại công viên)
+    const myId = 'web_' + Math.random().toString(36).substring(2, 7);
+    const myName = 'Cư Dân Web #' + Math.floor(100 + Math.random() * 900);
+    playerTag.innerHTML = `👤 Bạn đang điều khiển: <b>${myName}</b>`;
+
+    let myPos = { x: 3, y: 2.5, z: 2, rotY: 0, speed: 0 };
+    const remotePlayers = new Map();
+
+    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${location.host}`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+        statusBadge.textContent = '● Đã Kết Nối Realtime';
+        statusBadge.classList.add('connected');
+
+        // Gửi gói Join Khu 1
+        ws.send(JSON.stringify({
+            type: 'join',
+            playerId: myId,
+            playerName: myName,
+            zoneId: 1,
+            x: myPos.x,
+            y: myPos.y,
+            z: myPos.z,
+            rotY: myPos.rotY
+        }));
+    };
+
+    ws.onmessage = (event) => {
+        try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'init_zone' && msg.players) {
+                remotePlayers.clear();
+                msg.players.forEach(p => remotePlayers.set(p.id, p));
+            } else if (msg.type === 'player_joined') {
+                remotePlayers.set(msg.id, msg);
+            } else if (msg.type === 'player_moved') {
+                if (remotePlayers.has(msg.id)) {
+                    const p = remotePlayers.get(msg.id);
+                    p.x = msg.x;
+                    p.z = msg.z;
+                    p.rotY = msg.rotY;
+                }
+            } else if (msg.type === 'player_left') {
+                remotePlayers.delete(msg.id);
+            }
+        } catch (e) {}
+    };
+
+    ws.onclose = () => {
+        statusBadge.textContent = '○ Mất Kết Nối';
+        statusBadge.classList.remove('connected');
+    };
+
+    // Điều khiển bằng phím
+    const keys = { w: false, a: false, s: false, d: false };
+    window.addEventListener('keydown', (e) => {
+        const k = e.key.toLowerCase();
+        if (keys[k] !== undefined) keys[k] = true;
+    });
+    window.addEventListener('keyup', (e) => {
+        const k = e.key.toLowerCase();
+        if (keys[k] !== undefined) keys[k] = false;
+    });
+
+    // Nút bấm trên UI
+    function bindBtn(id, key) {
+        const btn = document.getElementById(id);
+        btn.addEventListener('mousedown', () => keys[key] = true);
+        btn.addEventListener('mouseup', () => keys[key] = false);
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+    }
+    bindBtn('btnW', 'w');
+    bindBtn('btnA', 'a');
+    bindBtn('btnS', 's');
+    bindBtn('btnD', 'd');
+
+    // Vòng lặp cập nhật vị trí & gửi gói tin (15Hz)
+    setInterval(() => {
+        let dx = 0;
+        let dz = 0;
+        if (keys.w) dz += 1;
+        if (keys.s) dz -= 1;
+        if (keys.a) dx -= 1;
+        if (keys.d) dx += 1;
+
+        const isMoving = (dx !== 0 || dz !== 0);
+        if (isMoving) {
+            const speed = 0.35;
+            myPos.x += dx * speed;
+            myPos.z += dz * speed;
+
+            // Giới hạn trong khuôn viên thành phố (-20m đến 20m)
+            myPos.x = Math.max(-20, Math.min(20, myPos.x));
+            myPos.z = Math.max(-20, Math.min(20, myPos.z));
+
+            myPos.rotY = Math.atan2(dx, dz) * (180 / Math.PI);
+            myPos.speed = 1.0;
+
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'move',
+                    playerId: myId,
+                    x: myPos.x,
+                    y: myPos.y,
+                    z: myPos.z,
+                    rotY: myPos.rotY,
+                    speed: myPos.speed
+                }));
+            }
+        }
+    }, 66); // ~15 FPS
+
+    // Vẽ Radar 2D
+    function drawRadar() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const scale = 7; // 1m = 7px
+
+        // Vẽ đài phun nước ở giữa
+        ctx.fillStyle = '#065f46';
+        ctx.fillRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('Đài Phun Nước', cx - 32, cy - 18);
+
+        // Vẽ người chơi khác (Sếp trong Unity)
+        remotePlayers.forEach(p => {
+            const px = cx + p.x * scale;
+            const py = cy - p.z * scale;
+
+            ctx.fillStyle = '#f59e0b'; // Màu vàng cam
+            ctx.beginPath();
+            ctx.arc(px, py, 9, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fde047';
+            ctx.font = '11px sans-serif';
+            ctx.fillText(p.name || 'Người chơi Unity', px - 25, py - 12);
+        });
+
+        // Vẽ chính mình (Người chơi Web)
+        const mx = cx + myPos.x * scale;
+        const my = cy - myPos.z * scale;
+
+        ctx.fillStyle = '#22c55e'; // Màu xanh lá
+        ctx.beginPath();
+        ctx.arc(mx, my, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('BẠN (Web)', mx - 25, my - 14);
+
+        requestAnimationFrame(drawRadar);
+    }
+    drawRadar();
+</script>
+
+</body>
+</html>

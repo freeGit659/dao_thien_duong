@@ -1,0 +1,12 @@
+{
+  "name": "dao-thien-duong-server",
+  "version": "1.0.0",
+  "description": "Realtime WebSocket Server for Dao Thien Duong (Paradise Island)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
