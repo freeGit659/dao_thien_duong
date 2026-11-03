@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, input, Input, EventMouse, EventKeyboard, KeyCode, math, find } from 'cc';
+import { _decorator, Component, Node, Vec3, Quat, input, Input, EventMouse, EventKeyboard, KeyCode, math, game, find } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('CameraController')
@@ -7,10 +7,10 @@ export class CameraController extends Component {
     public target: Node | null = null;
 
     @property
-    public distance: number = 6.5;
+    public distance: number = 5.5;
 
     @property
-    public minDistance: number = 2.5;
+    public minDistance: number = 2.0;
 
     @property
     public maxDistance: number = 15.0;
@@ -18,51 +18,51 @@ export class CameraController extends Component {
     @property
     public sensitivity: number = 0.25;
 
-    @property({ tooltip: 'Góc nghiêng tối thiểu từ trên xuống (độ), không bị xuyên đất' })
-    public minPitch: number = 5.0;
+    @property({ tooltip: 'Góc nghiêng mặc định nhìn từ trên chéo xuống sau gáy (độ)' })
+    public basePitch: number = 22.0;
 
-    @property({ tooltip: 'Góc nghiêng tối đa từ trên đỉnh đầu xuống (độ)' })
-    public maxPitch: number = 70.0;
+    @property({ tooltip: 'Tốc độ camera trả về sau gáy khi thả nút Alt' })
+    public returnSpeed: number = 16.0;
 
     @property({ tooltip: 'Độ cao tối thiểu so với mặt đất (mét)' })
-    public minGroundHeight: number = 0.5;
+    public minGroundHeight: number = 0.4;
 
     @property
-    public targetOffset: Vec3 = new Vec3(0, 1.2, 0);
+    public targetOffset: Vec3 = new Vec3(0, 1.3, 0);
 
     @property
     public invertY: boolean = false;
 
-    // Góc nhìn chuẩn mặc định: Yaw = 0, Pitch = 26 độ (Góc nhìn thứ 3 chéo xuống sau lưng nhân vật)
-    private _yaw: number = 0;
-    private _pitch: number = 26;
+    // Góc lệch khi người chơi đè phím Alt (Free Look)
+    private _freeLookYaw: number = 0;
+    private _freeLookPitch: number = 0;
     private _isAltDown: boolean = false;
-    private _isRightMouseDown: boolean = false;
+    private _isPointerLocked: boolean = false;
 
     public get isFreeLooking(): boolean {
-        return this._isAltDown || this._isRightMouseDown;
+        return this._isAltDown;
     }
 
     protected onLoad() {
-        // Lắng nghe chuột
         input.on(Input.EventType.MOUSE_DOWN, this.onMouseDown, this);
-        input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
         input.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this);
         input.on(Input.EventType.MOUSE_WHEEL, this.onMouseWheel, this);
 
-        // Lắng nghe phím
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
 
-        // Bổ sung lắng nghe Alt trên trình duyệt Web để chống trình duyệt cướp sự kiện
         if (typeof window !== 'undefined') {
             window.addEventListener('keydown', this.onWindowKeyDown.bind(this));
             window.addEventListener('keyup', this.onWindowKeyUp.bind(this));
         }
+
+        if (typeof document !== 'undefined') {
+            document.addEventListener('pointerlockchange', this.onPointerLockChange.bind(this));
+            document.addEventListener('mozpointerlockchange', this.onPointerLockChange.bind(this));
+        }
     }
 
     protected start() {
-        // Tự động tìm Player nếu chưa kéo vào Inspector
         if (!this.target) {
             const playerNode = find('Player') || this.node.scene?.getChildByName('Player');
             if (playerNode) {
@@ -74,7 +74,6 @@ export class CameraController extends Component {
 
     protected onDestroy() {
         input.off(Input.EventType.MOUSE_DOWN, this.onMouseDown, this);
-        input.off(Input.EventType.MOUSE_UP, this.onMouseUp, this);
         input.off(Input.EventType.MOUSE_MOVE, this.onMouseMove, this);
         input.off(Input.EventType.MOUSE_WHEEL, this.onMouseWheel, this);
 
@@ -84,6 +83,17 @@ export class CameraController extends Component {
         if (typeof window !== 'undefined') {
             window.removeEventListener('keydown', this.onWindowKeyDown.bind(this));
             window.removeEventListener('keyup', this.onWindowKeyUp.bind(this));
+        }
+
+        if (typeof document !== 'undefined') {
+            document.removeEventListener('pointerlockchange', this.onPointerLockChange.bind(this));
+            document.removeEventListener('mozpointerlockchange', this.onPointerLockChange.bind(this));
+        }
+    }
+
+    private onPointerLockChange() {
+        if (typeof document !== 'undefined' && game.canvas) {
+            this._isPointerLocked = (document.pointerLockElement === game.canvas);
         }
     }
 
@@ -103,9 +113,6 @@ export class CameraController extends Component {
     private onKeyDown(event: EventKeyboard) {
         if (event.keyCode === KeyCode.ALT_LEFT || event.keyCode === KeyCode.ALT_RIGHT) {
             this._isAltDown = true;
-        } else if (event.keyCode === KeyCode.KEY_C) {
-            // Nhấn phím C để lập tức đưa Camera về sau lưng nhân vật
-            this.resetBehindPlayer();
         }
     }
 
@@ -116,31 +123,40 @@ export class CameraController extends Component {
     }
 
     private onMouseDown(event: EventMouse) {
-        // Hỗ trợ cả Giữ Chuột Phải hoặc Giữ Phím Alt để xoay góc nhìn
-        if (event.getButton() === EventMouse.BUTTON_RIGHT) {
-            this._isRightMouseDown = true;
-        }
-    }
-
-    private onMouseUp(event: EventMouse) {
-        if (event.getButton() === EventMouse.BUTTON_RIGHT) {
-            this._isRightMouseDown = false;
+        // Click chuột vào màn hình để khóa chuột (Pointer Lock)
+        if (typeof document !== 'undefined' && game.canvas) {
+            if (document.pointerLockElement !== game.canvas) {
+                try {
+                    game.canvas.requestPointerLock();
+                } catch (e) {}
+            }
         }
     }
 
     private onMouseMove(event: EventMouse) {
-        // CHỈ XOAY CAMERA KHI ĐANG GIỮ PHÍM ALT HOẶC GIỮ CHUỘT PHẢI (Chuẩn PUBG / Game TPS)
-        if (this.isFreeLooking) {
-            const dx = event.getDeltaX();
-            const dy = event.getDeltaY();
+        const dx = event.getDeltaX();
+        const dy = event.getDeltaY();
 
-            // Xoay ngang (Yaw)
-            this._yaw -= dx * this.sensitivity;
+        if (this._isAltDown) {
+            // ĐANG GIỮ ALT: Chỉ xoay Camera vòng quanh người (Free Look)
+            this._freeLookYaw -= dx * this.sensitivity;
 
-            // Xoay dọc (Pitch)
             const pitchDelta = this.invertY ? (-dy * this.sensitivity) : (dy * this.sensitivity);
-            this._pitch += pitchDelta;
-            this._pitch = math.clamp(this._pitch, this.minPitch, this.maxPitch);
+            this._freeLookPitch += pitchDelta;
+            this._freeLookPitch = math.clamp(this._freeLookPitch, -15.0, 45.0);
+        } else {
+            // KHÔNG GIỮ ALT: Di chuột làm xoay mặt nhân vật!
+            // Camera gắn sau lưng nên tự động nhìn theo hướng mắt nhân vật giống thực tế!
+            if (this.target) {
+                const currentEuler = this.target.eulerAngles;
+                const newYaw = currentEuler.y - dx * this.sensitivity;
+                this.target.setRotationFromEuler(0, newYaw, 0);
+            }
+
+            // Điều chỉnh góc ngước lên / nhìn xuống
+            const pitchDelta = this.invertY ? (-dy * this.sensitivity) : (dy * this.sensitivity);
+            this.basePitch += pitchDelta;
+            this.basePitch = math.clamp(this.basePitch, 5.0, 65.0);
         }
     }
 
@@ -149,44 +165,53 @@ export class CameraController extends Component {
         this.distance = math.clamp(this.distance - scroll * 0.005, this.minDistance, this.maxDistance);
     }
 
-    /**
-     * Đưa Camera quay lại thẳng sau lưng nhân vật
-     */
-    public resetBehindPlayer() {
-        if (!this.target) return;
-        this._yaw = this.target.eulerAngles.y;
-        this._pitch = 26.0;
-    }
-
     protected lateUpdate(dt: number) {
         if (!this.target) return;
 
+        // Khi KHÔNG giữ Alt: trả góc Free Look mượt mà về 0 (góc nhìn thực tế sau gáy)
+        if (!this._isAltDown) {
+            this._freeLookYaw = math.lerp(this._freeLookYaw, 0, dt * this.returnSpeed);
+            this._freeLookPitch = math.lerp(this._freeLookPitch, 0, dt * this.returnSpeed);
+            if (Math.abs(this._freeLookYaw) < 0.05) this._freeLookYaw = 0;
+            if (Math.abs(this._freeLookPitch) < 0.05) this._freeLookPitch = 0;
+        }
+
         const focusPoint = this.target.worldPosition.clone().add(this.targetOffset);
 
-        // Chuyển đổi tọa độ cầu sang tọa độ không gian 3D
-        const yawRad = math.toRadian(this._yaw);
-        const pitchRad = math.toRadian(this._pitch);
+        // Vector hướng sau lưng nhân vật (Backward vector)
+        const backDir = new Vec3(0, 0, 1);
+        Vec3.transformQuat(backDir, backDir, this.target.worldRotation);
+        backDir.y = 0;
+        backDir.normalize();
+
+        // Xoay lệch khi đè phím Alt (hoặc lúc đang trả về từ Alt)
+        if (this._freeLookYaw !== 0) {
+            const rotY = new Quat();
+            Quat.fromAxisAngle(rotY, Vec3.UP, math.toRadian(this._freeLookYaw));
+            Vec3.transformQuat(backDir, backDir, rotY);
+        }
+
+        // Tính toán độ cao và khoảng cách lùi sau lưng
+        const totalPitch = math.clamp(this.basePitch + this._freeLookPitch, 5.0, 75.0);
+        const pitchRad = math.toRadian(totalPitch);
 
         const yOffset = this.distance * Math.sin(pitchRad);
         const hDist = this.distance * Math.cos(pitchRad);
 
-        const xOffset = hDist * Math.sin(yawRad);
-        const zOffset = hDist * Math.cos(yawRad);
-
         const camPos = new Vec3(
-            focusPoint.x + xOffset,
+            focusPoint.x + backDir.x * hDist,
             focusPoint.y + yOffset,
-            focusPoint.z + zOffset
+            focusPoint.z + backDir.z * hDist
         );
 
-        // Khóa va chạm mặt đất: Camera không bao giờ chui xuống dưới đất
+        // Khóa va chạm mặt đất
         if (camPos.y < this.minGroundHeight) {
             camPos.y = this.minGroundHeight;
         }
 
         this.node.setWorldPosition(camPos);
 
-        // Luôn luôn hướng mắt nhìn thẳng vào nhân vật
+        // Camera luôn hướng mắt vào nhân vật
         this.node.lookAt(focusPoint, Vec3.UP);
     }
 }

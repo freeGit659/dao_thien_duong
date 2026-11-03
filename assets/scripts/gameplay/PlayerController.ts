@@ -95,37 +95,25 @@ export class PlayerController extends Component {
         this._isMoving = (this._inputDir.lengthSqr() > 0.01);
 
         if (this._isMoving) {
-            // Tính toán hướng di chuyển tương đối theo Camera
-            let moveDir = new Vec3(this._inputDir.x, 0, this._inputDir.z).normalize();
+            const forward = new Vec3();
+            const right = new Vec3();
 
-            if (this.cameraNode) {
-                const forward = new Vec3();
-                const right = new Vec3();
+            // Lấy hướng di chuyển trực tiếp từ hướng mặt của nhân vật (chuẩn PUBG)
+            Vec3.transformQuat(forward, Vec3.FORWARD, this.node.worldRotation);
+            Vec3.transformQuat(right, Vec3.RIGHT, this.node.worldRotation);
 
-                // Chuẩn Cocos Creator 3.8: Lấy hướng forward và right từ worldRotation của Camera
-                Vec3.transformQuat(forward, Vec3.FORWARD, this.cameraNode.worldRotation);
-                Vec3.transformQuat(right, Vec3.RIGHT, this.cameraNode.worldRotation);
+            forward.y = 0;
+            right.y = 0;
+            forward.normalize();
+            right.normalize();
 
-                forward.y = 0;
-                right.y = 0;
-                forward.normalize();
-                right.normalize();
-
-                const moveZ = forward.multiplyScalar(this._inputDir.z);
-                const moveX = right.multiplyScalar(this._inputDir.x);
-                moveDir = moveZ.add(moveX).normalize();
-            }
+            const moveZ = forward.multiplyScalar(this._inputDir.z);
+            const moveX = right.multiplyScalar(this._inputDir.x);
+            const moveDir = moveZ.add(moveX).normalize();
 
             // Di chuyển vị trí Node
             const moveStep = moveDir.clone().multiplyScalar(this.moveSpeed * dt);
             this.node.setPosition(this.node.position.clone().add(moveStep));
-
-            // Xoay nhân vật mượt mà theo hướng đi
-            Quat.fromViewUp(this._targetRotation, moveDir, Vec3.UP);
-            const currentRot = this.node.rotation;
-            const newRot = new Quat();
-            Quat.slerp(newRot, currentRot, this._targetRotation, dt * this.rotateSpeed);
-            this.node.setRotation(newRot);
 
             this.playAnimation('run');
         } else {
