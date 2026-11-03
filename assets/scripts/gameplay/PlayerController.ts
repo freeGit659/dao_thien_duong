@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, Quat, input, Input, EventKeyboard, KeyCode, SkeletalAnimation } from 'cc';
+import { _decorator, Component, Node, Vec3, Quat, input, Input, EventKeyboard, KeyCode, SkeletalAnimation, find } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('PlayerController')
@@ -31,6 +31,16 @@ export class PlayerController extends Component {
 
         if (!this.anim) {
             this.anim = this.getComponentInChildren(SkeletalAnimation);
+        }
+    }
+
+    protected start() {
+        if (!this.cameraNode) {
+            const cam = find('Main Camera') || this.node.scene?.getChildByName('Main Camera');
+            if (cam) {
+                this.cameraNode = cam;
+                console.log('✅ [PlayerController] Đã tự động gán Camera Node là Main Camera!');
+            }
         }
     }
 
