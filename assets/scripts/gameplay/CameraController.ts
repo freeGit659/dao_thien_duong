@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, input, Input, EventMouse, math, game, find } from 'cc';
+import { _decorator, Component, Node, Vec3, input, Input, EventMouse, EventKeyboard, KeyCode, math, find } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('CameraController')
@@ -7,7 +7,7 @@ export class CameraController extends Component {
     public target: Node | null = null;
 
     @property
-    public distance: number = 7.0;
+    public distance: number = 6.5;
 
     @property
     public minDistance: number = 2.5;
@@ -16,13 +16,13 @@ export class CameraController extends Component {
     public maxDistance: number = 15.0;
 
     @property
-    public sensitivity: number = 0.2;
+    public sensitivity: number = 0.25;
 
-    @property({ tooltip: 'Góc nhìn tối thiểu từ trên xuống (độ), luôn > 0 để không bị xuyên đất' })
+    @property({ tooltip: 'Góc nghiêng tối thiểu từ trên xuống (độ), không bị xuyên đất' })
     public minPitch: number = 5.0;
 
-    @property({ tooltip: 'Góc nhìn tối đa từ trên đỉnh đầu xuống (độ)' })
-    public maxPitch: number = 75.0;
+    @property({ tooltip: 'Góc nghiêng tối đa từ trên đỉnh đầu xuống (độ)' })
+    public maxPitch: number = 70.0;
 
     @property({ tooltip: 'Độ cao tối thiểu so với mặt đất (mét)' })
     public minGroundHeight: number = 0.5;
@@ -33,22 +33,31 @@ export class CameraController extends Component {
     @property
     public invertY: boolean = false;
 
-    // Khởi tạo góc nhìn chuẩn: Yaw = 0, Pitch = 25 độ (nhìn từ trên chéo xuống sau lưng nhân vật)
+    // Góc nhìn chuẩn mặc định: Yaw = 0, Pitch = 26 độ (Góc nhìn thứ 3 chéo xuống sau lưng nhân vật)
     private _yaw: number = 0;
-    private _pitch: number = 25;
-    private _isMouseDown: boolean = false;
-    private _isPointerLocked: boolean = false;
+    private _pitch: number = 26;
+    private _isAltDown: boolean = false;
+    private _isRightMouseDown: boolean = false;
+
+    public get isFreeLooking(): boolean {
+        return this._isAltDown || this._isRightMouseDown;
+    }
 
     protected onLoad() {
+        // Lắng nghe chuột
         input.on(Input.EventType.MOUSE_DOWN, this.onMouseDown, this);
         input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
         input.on(Input.EventType.MOUSE_MOVE, this.onMouseMove, this);
         input.on(Input.EventType.MOUSE_WHEEL, this.onMouseWheel, this);
 
-        // Lắng nghe sự kiện Pointer Lock của trình duyệt Web (Khóa và ẩn chuột chuẩn như Unity)
-        if (typeof document !== 'undefined') {
-            document.addEventListener('pointerlockchange', this.onPointerLockChange.bind(this));
-            document.addEventListener('mozpointerlockchange', this.onPointerLockChange.bind(this));
+        // Lắng nghe phím
+        input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+        input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
+
+        // Bổ sung lắng nghe Alt trên trình duyệt Web để chống trình duyệt cướp sự kiện
+        if (typeof window !== 'undefined') {
+            window.addEventListener('keydown', this.onWindowKeyDown.bind(this));
+            window.addEventListener('keyup', this.onWindowKeyUp.bind(this));
         }
     }
 
@@ -69,57 +78,66 @@ export class CameraController extends Component {
         input.off(Input.EventType.MOUSE_MOVE, this.onMouseMove, this);
         input.off(Input.EventType.MOUSE_WHEEL, this.onMouseWheel, this);
 
-        if (typeof document !== 'undefined') {
-            document.removeEventListener('pointerlockchange', this.onPointerLockChange.bind(this));
-            document.removeEventListener('mozpointerlockchange', this.onPointerLockChange.bind(this));
+        input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+        input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
+
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('keydown', this.onWindowKeyDown.bind(this));
+            window.removeEventListener('keyup', this.onWindowKeyUp.bind(this));
         }
     }
 
-    private onPointerLockChange() {
-        if (typeof document !== 'undefined' && game.canvas) {
-            this._isPointerLocked = (document.pointerLockElement === game.canvas);
+    private onWindowKeyDown(e: KeyboardEvent) {
+        if (e.key === 'Alt') {
+            this._isAltDown = true;
+            e.preventDefault();
         }
     }
 
-    /**
-     * Bấm chuột vào màn hình game để khóa chuột và ẩn con trỏ (chuẩn Unity CursorLockMode.Locked)
-     */
-    public requestLock() {
-        if (typeof document !== 'undefined' && game.canvas) {
-            try {
-                if (document.pointerLockElement !== game.canvas) {
-                    game.canvas.requestPointerLock();
-                }
-            } catch (err) {
-                console.warn('[CameraController] requestPointerLock lỗi:', err);
-            }
+    private onWindowKeyUp(e: KeyboardEvent) {
+        if (e.key === 'Alt') {
+            this._isAltDown = false;
+        }
+    }
+
+    private onKeyDown(event: EventKeyboard) {
+        if (event.keyCode === KeyCode.ALT_LEFT || event.keyCode === KeyCode.ALT_RIGHT) {
+            this._isAltDown = true;
+        } else if (event.keyCode === KeyCode.KEY_C) {
+            // Nhấn phím C để lập tức đưa Camera về sau lưng nhân vật
+            this.resetBehindPlayer();
+        }
+    }
+
+    private onKeyUp(event: EventKeyboard) {
+        if (event.keyCode === KeyCode.ALT_LEFT || event.keyCode === KeyCode.ALT_RIGHT) {
+            this._isAltDown = false;
         }
     }
 
     private onMouseDown(event: EventMouse) {
-        if (event.getButton() === EventMouse.BUTTON_LEFT || event.getButton() === EventMouse.BUTTON_RIGHT) {
-            this._isMouseDown = true;
-            // Tự động khóa và ẩn chuột khi click vào màn hình game
-            this.requestLock();
+        // Hỗ trợ cả Giữ Chuột Phải hoặc Giữ Phím Alt để xoay góc nhìn
+        if (event.getButton() === EventMouse.BUTTON_RIGHT) {
+            this._isRightMouseDown = true;
         }
     }
 
-    private onMouseUp() {
-        this._isMouseDown = false;
+    private onMouseUp(event: EventMouse) {
+        if (event.getButton() === EventMouse.BUTTON_RIGHT) {
+            this._isRightMouseDown = false;
+        }
     }
 
     private onMouseMove(event: EventMouse) {
-        // Cho phép xoay khi chuột đang khóa ẩn HOẶC đang giữ chuột
-        if (this._isPointerLocked || this._isMouseDown) {
+        // CHỈ XOAY CAMERA KHI ĐANG GIỮ PHÍM ALT HOẶC GIỮ CHUỘT PHẢI (Chuẩn PUBG / Game TPS)
+        if (this.isFreeLooking) {
             const dx = event.getDeltaX();
             const dy = event.getDeltaY();
 
             // Xoay ngang (Yaw)
             this._yaw -= dx * this.sensitivity;
 
-            // Xoay dọc (Pitch): nhìn từ trên xuống
-            // Di chuột lên -> nhìn ngước lên (pitch giảm về phía chân trời)
-            // Di chuột xuống -> nhìn chúc xuống (pitch tăng nhìn từ trên đỉnh đầu)
+            // Xoay dọc (Pitch)
             const pitchDelta = this.invertY ? (-dy * this.sensitivity) : (dy * this.sensitivity);
             this._pitch += pitchDelta;
             this._pitch = math.clamp(this._pitch, this.minPitch, this.maxPitch);
@@ -131,16 +149,24 @@ export class CameraController extends Component {
         this.distance = math.clamp(this.distance - scroll * 0.005, this.minDistance, this.maxDistance);
     }
 
+    /**
+     * Đưa Camera quay lại thẳng sau lưng nhân vật
+     */
+    public resetBehindPlayer() {
+        if (!this.target) return;
+        this._yaw = this.target.eulerAngles.y;
+        this._pitch = 26.0;
+    }
+
     protected lateUpdate(dt: number) {
         if (!this.target) return;
 
         const focusPoint = this.target.worldPosition.clone().add(this.targetOffset);
 
-        // Chuyển đổi tọa độ cầu: Yaw (ngang) và Pitch (dọc)
+        // Chuyển đổi tọa độ cầu sang tọa độ không gian 3D
         const yawRad = math.toRadian(this._yaw);
         const pitchRad = math.toRadian(this._pitch);
 
-        // Tính khoảng cách theo góc nhìn từ trên chéo xuống
         const yOffset = this.distance * Math.sin(pitchRad);
         const hDist = this.distance * Math.cos(pitchRad);
 
@@ -153,14 +179,14 @@ export class CameraController extends Component {
             focusPoint.z + zOffset
         );
 
-        // Giới hạn mặt đất: Camera KHÔNG BAO GIỜ bị tụt xuống dưới mặt đất
+        // Khóa va chạm mặt đất: Camera không bao giờ chui xuống dưới đất
         if (camPos.y < this.minGroundHeight) {
             camPos.y = this.minGroundHeight;
         }
 
         this.node.setWorldPosition(camPos);
 
-        // Camera luôn hướng thẳng mắt vào nhân vật
+        // Luôn luôn hướng mắt nhìn thẳng vào nhân vật
         this.node.lookAt(focusPoint, Vec3.UP);
     }
 }
